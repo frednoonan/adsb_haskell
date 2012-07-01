@@ -43,7 +43,7 @@ substr start length = (take length) . (drop start)
 
 -- ICAO ID is substring from 2 to 6 in the frame
 parseIcaoId :: String -> IcaoId
-parseIcaoId hex = substr 2 6 hex
+parseIcaoId = substr 2 6
 
 -- capability is lower three bytes (and with 7) of first byte
 parseCapability :: String -> Capability
@@ -61,13 +61,13 @@ byteFromHex :: String -> Integer
 byteFromHex = fst . head . readHex
 
 parseId :: String -> Identification
-parseId hex = map icaoCharCodeToChar (idCharcodes $ byteFromHex (substr 10 12 hex))
+parseId = map icaoCharCodeToChar . idCharcodes . byteFromHex . substr 10 12
 
 -- decoding identification frames,
 -- maps a hex-decoded integer to ICAO charcodes
 -- splits 48bit int into 6bit chunks
 idCharcodes :: Integer -> [Integer]
-idCharcodes int = map (\e -> (snd e `shiftR` ((fst e)*6)) .&. 0x3f) (reverse [0..7] `zip` repeat int)
+idCharcodes = map (\e -> (snd e `shiftR` ((fst e)*6)) .&. 0x3f) . zip (reverse [0..7]) . repeat
 
 -- decoding identification frames,
 -- map a char code to its corresponding character
