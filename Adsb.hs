@@ -67,7 +67,8 @@ parseId = map icaoCharCodeToChar . idCharcodes . byteFromHex . substr 10 12
 -- maps a hex-decoded integer to ICAO charcodes
 -- splits 48bit int into 6bit chunks
 idCharcodes :: Integer -> [Integer]
-idCharcodes = map (\e -> (snd e `shiftR` ((fst e)*6)) .&. 0x3f) . zip (reverse [0..7]) . repeat
+idCharcodes = map extractSixBits . zip ([42, 36..0]) . repeat
+	where extractSixBits (shiftWidth, num) = num `shiftR` shiftWidth .&. 0x3f
 
 -- decoding identification frames,
 -- map a char code to its corresponding character
