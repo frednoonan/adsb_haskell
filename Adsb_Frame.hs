@@ -1,4 +1,4 @@
-module Adsb where
+module Adsb.Frame where
 
 import Numeric
 import Data.Bits
