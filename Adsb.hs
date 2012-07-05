@@ -10,17 +10,18 @@ type Identification = String
 type IcaoId         = String
 type Time           = String -- FIXME
 type Capability     = Integer
+type RawFrame       = String
 
 type Lat            = Double
 type Lon            = Double
 type Position       = (Lat, Lon)
 
-data AdsbFrame = AdsbFrameAllCallReply IcaoId Capability
-	| AdsbFrameIdentificationReport IcaoId Capability Identification
-	| AdsbFramePositionReport       IcaoId Capability Position
-	| AdsbFrameTrackReport          IcaoId Capability Position
-	| AdsbFrameOther                IcaoId Capability DownlinkFormat SubType
-	deriving (Eq, Ord, Show)
+-- FIXME record syntax
+data AdsbFrame = AdsbFrameAllCallReply RawFrame IcaoId Capability
+	| AdsbFrameIdentificationReport    RawFrame IcaoId Capability Identification
+	| AdsbFramePositionReport          RawFrame IcaoId Capability Position
+	| AdsbFrameTrackReport             RawFrame IcaoId Capability Position
+	| AdsbFrameOther                   RawFrame IcaoId Capability DownlinkFormat SubType
 
 -- parse a hex-string of a frame into an AdsbFrame
 instance Read AdsbFrame where
@@ -28,9 +29,9 @@ instance Read AdsbFrame where
 		where parseFrame hex =
 			-- FIXME error handling if frame has unexpected size
 			case downlinkFormat of
-				11 -> AdsbFrameAllCallReply icaoId capability
+				11 -> AdsbFrameAllCallReply hex icaoId capability
 				17 -> case subType of
-					4 -> AdsbFrameIdentificationReport icaoId capability (parseId hex)
+					4 -> AdsbFrameIdentificationReport hex icaoId capability (parseId hex)
 					_ -> error "Unsupported subtype format"
 					where subType = parseSubType hex
 				_ -> error "Unsupported downlink format"
@@ -38,6 +39,13 @@ instance Read AdsbFrame where
 				icaoId        = parseIcaoId hex
 				capability    = parseCapability hex
 				downlinkFormat = parseDownlinkFormat hex
+
+instance Show AdsbFrame where
+	show (AdsbFrameAllCallReply         rawFrame _ _    ) = rawFrame
+	show (AdsbFrameIdentificationReport rawFrame _ _ _  ) = rawFrame
+	show (AdsbFramePositionReport       rawFrame _ _ _  ) = rawFrame
+	show (AdsbFrameTrackReport          rawFrame _ _ _  ) = rawFrame
+	show (AdsbFrameOther                rawFrame _ _ _ _) = rawFrame
 
 substr :: Int -> Int -> String -> String
 substr start length = (take length) . (drop start)
