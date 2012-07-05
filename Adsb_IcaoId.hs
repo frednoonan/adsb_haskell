@@ -8,10 +8,24 @@ type CountryName = String
 type Prefix      = Int
 type PrefixSize  = Int
 
+-- get the country code and name from an ICAO id in hex format
+countryFromIcaoId :: String -> Maybe (CountryCode, CountryName, Prefix, PrefixSize)
+countryFromIcaoId hex =
+	case matchingPrefixes of
+		[]     -> Nothing
+		_      -> Just $ head matchingPrefixes
+	where
+		matchingPrefixes = filter (prefixMatches hex) prefixes
+
+-- the prefix matches if the upper prefixSize bits of hex match the prefix
+-- (i.e. shift right by 24 - prefixSize and compare)
+prefixMatches :: String -> (CountryCode, CountryName, Prefix, PrefixSize) -> Bool
+prefixMatches hex (cc, cn, prefix, prefixSize) =
+	(fst $ head $ readHex hex) `shiftR` (24 - prefixSize) == prefix
+
 -- data from http://www.kloth.net/radio/icao24alloc.php
 -- and ISO-3166-1 alpha-2 country codes from
 -- https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-
 prefixes = [
 	("US", "United States", 10, 4),
 	("RU", "Russian Federation", 1, 4),
@@ -204,17 +218,3 @@ prefixes = [
 	("--", "ICAO (special use)", 8804, 14),
 	("--", "ICAO (special use)", 15396, 14)]
 
--- get the country code and name from an ICAO id in hex format
-countryFromIcaoId :: String -> Maybe (CountryCode, CountryName, Prefix, PrefixSize)
-countryFromIcaoId hex =
-	case matchingPrefixes of
-		[]     -> Nothing
-		_      -> Just $ head matchingPrefixes
-	where
-		matchingPrefixes = filter (prefixMatches hex) prefixes
-
--- the prefix matches if the upper prefixSize bits of hex match the prefix
--- (i.e. shift right by 24 - prefixSize and compare)
-prefixMatches :: String -> (CountryCode, CountryName, Prefix, PrefixSize) -> Bool
-prefixMatches hex (cc, cn, prefix, prefixSize) =
-	(fst $ head $ readHex hex) `shiftR` (24 - prefixSize) == prefix
