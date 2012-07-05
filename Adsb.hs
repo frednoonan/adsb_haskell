@@ -23,21 +23,20 @@ data AdsbFrame = AdsbFrameAllCallReply IcaoId Capability
 	deriving (Eq, Ord, Show)
 
 -- parse a hex-string of a frame into an AdsbFrame
-instance Read AdsbFrame where
-	readsPrec _ hex = [(parseFrame hex, "")]
-		where parseFrame hex =
-			-- FIXME error handling if frame has unexpected size
-			case downlinkFormat of
-				11 -> AdsbFrameAllCallReply icaoId capability
-				17 -> case subType of
-					4 -> AdsbFrameIdentificationReport icaoId capability (parseId hex)
-					_ -> error "Unsupported subtype format"
-					where subType = parseSubType hex
-				_ -> error "Unsupported downlink format"
-			where
-				icaoId        = parseIcaoId hex
-				capability    = parseCapability hex
-				downlinkFormat = parseDownlinkFormat hex
+parseFrame :: String -> AdsbFrame
+parseFrame hex =
+	-- FIXME error handling if frame has unexpected size
+	case downlinkFormat of
+		11 -> AdsbFrameAllCallReply icaoId capability
+		17 -> case subType of
+			4 -> AdsbFrameIdentificationReport icaoId capability (parseId hex)
+			_ -> error "Unsupported subtype format"
+			where subType = parseSubType hex
+		_ -> error "Unsupported downlink format"
+	where
+		icaoId        = parseIcaoId hex
+		capability    = parseCapability hex
+		downlinkFormat = parseDownlinkFormat hex
 
 substr :: Int -> Int -> String -> String
 substr start length = (take length) . (drop start)
