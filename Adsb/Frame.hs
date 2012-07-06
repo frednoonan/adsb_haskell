@@ -30,6 +30,12 @@ data AdsbFrame = AdsbFrameAllCallReply IcaoId Capability
 	| AdsbFrameOther                IcaoId Capability DownlinkFormat SubType
 	deriving (Eq, Ord, Show)
 
+icaoId :: AdsbFrame -> IcaoId
+icaoId (AdsbFrameAllCallReply         icaoid _)     = icaoid
+icaoId (AdsbFrameIdentificationReport icaoid _ _)   = icaoid
+icaoId (AdsbFramePositionReport       icaoid _ _ _) = icaoid
+icaoId (AdsbFrameOther                icaoid _ _ _) = icaoid
+
 -- parse a hex-string of a frame into an AdsbFrame
 parseFrame :: String -> AdsbFrame
 parseFrame hex =
@@ -42,12 +48,12 @@ parseFrame hex =
 			12 -> AdsbFramePositionReport      icaoId capability (parseRawPosition hex) (frameType hex)
 			18 -> AdsbFramePositionReport      icaoId capability (parseRawPosition hex) (frameType hex)
 			_ -> AdsbFrameOther                icaoId capability 17 subType
-			where subType = parseSubType hex
-		_ -> error "Unsupported downlink format"
+		_ -> AdsbFrameOther icaoId capability downlinkFormat subType
 	where
-		icaoId        = parseIcaoId hex
-		capability    = parseCapability hex
+		icaoId         = parseIcaoId hex
+		capability     = parseCapability hex
 		downlinkFormat = parseDownlinkFormat hex
+		subType        = parseSubType hex
 
 substr :: Int -> Int -> String -> String
 substr start length = (take length) . (drop start)
